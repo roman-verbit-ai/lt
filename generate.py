@@ -1,21 +1,21 @@
 import argparse
+import string
 
 import numpy as np
 
 import torch
 import torch.nn.functional as F
 
+from model import CharRNN
 from common import one_hot_encode
 
 
 # Defining a method to generate the next character
-from model import CharRNN
-
-
 def predict(net, char, h=None, top_k=None):
-    ''' Given a character, predict the next character.
-        Returns the predicted character and the hidden state.
-    '''
+    """
+    Given a character, predict the next character.
+    Returns the predicted character and the hidden state.
+    """
 
     # tensor inputs
     x = np.array([[net.char2int[char]]])
@@ -52,7 +52,7 @@ def predict(net, char, h=None, top_k=None):
 
 
 # Declaring a method to generate new text
-def sample(net, size, prime='The', top_k=None):
+def sample(net, size, prime, top_k=None):
     if torch.cuda.is_available():
         net.cuda()
     else:
@@ -76,23 +76,109 @@ def sample(net, size, prime='The', top_k=None):
     return ''.join(chars)
 
 
+# ============== #
+# Output Formats #
+# ============== #
+def get_chapter(nnet, prime, n_verses=40):
+
+    # get text
+    text = sample(nnet, 2000, prime=prime, top_k=5)
+
+    # split to verses
+    verses = text.split('\n')
+    verses = verses[:-1]    # drop last verse, it's usually incomplete
+
+    # return num verses
+    return '\n'.join(verses[:n_verses])
+
+
+def get_acrostichon(nnet, prime):
+
+    # result text
+    verses = list()
+    words = set()
+
+    # iterate num verses
+    for c_idx in range(len(prime)):
+
+        # try to get word which begins with current char
+        cur_prime = next((w for w in words if w.startswith(prime[c_idx])), prime[c_idx])
+
+        # get verse
+        good_verse = False
+        while not good_verse:
+            verse = sample(nnet, 100, prime=cur_prime, top_k=2 + c_idx)
+            good_verse = len(verse) > 20
+
+        # index words
+        words.update({w.strip(string.punctuation) for w in verse.split()})
+
+        # slice sample
+        stichon = verse[:verse.find('\n')]
+
+        # # format sample
+        # first_space_idx = stichon.find(' ')
+        # if first_space_idx > 0 and stichon[first_space_idx - 1] not in string.punctuation:
+        #     stichon = stichon.replace(' ', ' - ' if c_idx % 2 else ', ', 1)
+
+        # add verse to list
+        verses.append(stichon)
+
+    return '\n'.join(verses)
+
+
+def get_horizontal_acrostichon(nnet, prime):
+
+    # result text
+    verses = list()
+
+    # iterate num verses
+    for c_idx in range(len(prime)):
+
+        # try to get word which begins with current char
+        cur_prime = prime[:c_idx + 1]
+
+        # get verse
+        verse = sample(nnet, 100, prime=cur_prime, top_k=2 + c_idx)
+
+        # slice sample
+        stichon = verse[:verse.find('\n')]
+
+        # add verse to list
+        verses.append(stichon)
+
+    return '\n'.join(verses)
+
+
 if __name__ == "__main__":
 
     # Parse command line arguments
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('checkpoint', type=str)
-    argparser.add_argument('-p', '--prime_str', type=str, default='A')
+    argparser.add_argument('model_path', type=str)
+    argparser.add_argument('-p', '--prime_str', type=str, required=True)
     argparser.add_argument('-l', '--predict_len', type=int, default=1000)
+
+    # Output
+    argparser.add_argument('-n', '--n_verses', type=int)
+    argparser.add_argument('-f', '--format', type=str, default='stanza',
+                           choices=['chapter', 'acrostic', 'horizontal_acrostic'])
+
     args = argparser.parse_args()
 
     # load checkpoint
-    cp = torch.load(args.checkpoint)
+    cp = torch.load(args.model_path)
 
     # init model
-    nnet = CharRNN(cp['tokens'], cp['n_hidden'], cp['n_layers'])
-    nnet.load_state_dict(cp['state_dict'])
+    char_rnn = CharRNN(cp['tokens'], cp['n_hidden'], cp['n_layers'])
+    char_rnn.load_state_dict(cp['state_dict'])
 
-    # do sample
-    s = sample(nnet, args.predict_len, prime=args.prime_str, top_k=5)
+    # generate
+    out = ''
+    if args.format == 'chapter':
+        out = get_chapter(char_rnn, args.prime_str, args.n_verses)
+    elif args.format == 'acrostic':
+        out = get_acrostichon(char_rnn, args.prime_str)
+    elif args.format == 'horizontal_acrostic':
+        out = get_horizontal_acrostichon(char_rnn, args.prime_str)
 
-    print(s)
+    print(out)
