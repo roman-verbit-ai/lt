@@ -1,13 +1,12 @@
-import argparse
 import string
-
+import argparse
 import numpy as np
 
 import torch
 import torch.nn.functional as F
 
-from model import CharRNN
-from common import one_hot_encode
+from ml.model import CharRNN
+from ml.common import one_hot_encode
 
 
 # Defining a method to generate the next character

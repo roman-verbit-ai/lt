@@ -64,4 +64,4 @@ def gen_clean_corpus(corpus_path):
 
 
 # gen corpus
-gen_clean_corpus("/Users/himmelroman/projects/lt/data/heb_bible_text_only")
+gen_clean_corpus("/data/heb_bible_text_only")
