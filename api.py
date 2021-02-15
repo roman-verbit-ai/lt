@@ -3,7 +3,7 @@ import torch
 from fastapi import FastAPI
 
 from ml.model import CharRNN
-from ml.generate import get_chapter, get_acrostichon, get_horizontal_acrostichon
+from ml.generate import get_chapter, get_acrostic, get_horizontal_acrostic
 
 
 # FastAPI app
@@ -20,8 +20,18 @@ def ping():
     return {"message": "pong!"}
 
 
-@app.get("/generate/{form}/{prime}")
-def predict(form: str, prime: str):
+@app.get("/models")
+def list_models():
+    return ['bible']
+
+
+@app.get("/models/{model}/forms")
+def list_models():
+    return ['chapter', 'acrostic', 'horizontal_acrostic']
+
+
+@app.get("/models/{model}/{form}/generate/{prime}")
+def generate(form: str, prime: str):
 
     # default value
     out = ''
@@ -35,11 +45,11 @@ def predict(form: str, prime: str):
     elif form == 'acrostic':
 
         # gen acrostic
-        out = get_acrostichon(char_rnn, prime)
+        out = get_acrostic(char_rnn, prime)
 
     elif form == 'horizontal_acrostic':
 
         # gen horizontal acrostic
-        out = get_horizontal_acrostichon(char_rnn, prime)
+        out = get_horizontal_acrostic(char_rnn, prime)
 
     return {"text": str(out)}

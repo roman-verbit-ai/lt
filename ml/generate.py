@@ -91,7 +91,7 @@ def get_chapter(nnet, prime, n_verses=40):
     return '\n'.join(verses[:n_verses])
 
 
-def get_acrostichon(nnet, prime):
+def get_acrostic(nnet, prime):
 
     # result text
     verses = list()
@@ -126,7 +126,7 @@ def get_acrostichon(nnet, prime):
     return '\n'.join(verses)
 
 
-def get_horizontal_acrostichon(nnet, prime):
+def get_horizontal_acrostic(nnet, prime):
 
     # result text
     verses = list()
@@ -176,8 +176,8 @@ if __name__ == "__main__":
     if args.format == 'chapter':
         out = get_chapter(char_rnn, args.prime_str, args.n_verses)
     elif args.format == 'acrostic':
-        out = get_acrostichon(char_rnn, args.prime_str)
+        out = get_acrostic(char_rnn, args.prime_str)
     elif args.format == 'horizontal_acrostic':
-        out = get_horizontal_acrostichon(char_rnn, args.prime_str)
+        out = get_horizontal_acrostic(char_rnn, args.prime_str)
 
     print(out)
