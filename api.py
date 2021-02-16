@@ -1,6 +1,8 @@
 import os
 import torch
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from ml.model import CharRNN
 from ml.generate import get_chapter, get_acrostic, get_horizontal_acrostic
@@ -8,6 +10,23 @@ from ml.generate import get_chapter, get_acrostic, get_horizontal_acrostic
 
 # FastAPI app
 app = FastAPI()
+
+
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:3000"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # load model
 model_cp = torch.load(os.environ['MODEL_PATH'])
@@ -30,8 +49,8 @@ def list_models():
     return ['chapter', 'acrostic', 'horizontal_acrostic']
 
 
-@app.get("/models/{model}/{form}/generate/{prime}")
-def generate(form: str, prime: str):
+@app.get("/generate")
+def generate(form: str = 'chapter', prime: str = 'א'):
 
     # default value
     out = ''
@@ -52,4 +71,7 @@ def generate(form: str, prime: str):
         # gen horizontal acrostic
         out = get_horizontal_acrostic(char_rnn, prime)
 
-    return {"text": str(out)}
+    return {
+        "form": form,
+        "verses": out.split('\n')
+    }
