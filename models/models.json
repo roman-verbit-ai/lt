@@ -1,0 +1,17 @@
+[
+  {
+    "id": "heb_bible_consonants",
+    "name": "תנ״ך ללא ניקוד",
+    "file": "heb_bible_consonants_20e.net"
+  },
+  {
+    "id": "heb_bible_vowels",
+    "name": "תנ״ך מנוקד",
+    "file": "heb_bible_vowels_30e.net"
+  },
+  {
+    "id": "heb_bible_accents",
+    "name": "תנ״ך עם טעמי המקרא",
+    "file": "heb_bible_accents_30e.net"
+  }
+]
